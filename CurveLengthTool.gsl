@@ -1,0 +1,75 @@
+Sub GetCurveLength()
+    Dim sh As Shape
+    Dim doc As Document
+    Dim totalLength As Double
+    Dim i As Integer, j As Integer
+    Dim curveCount As Integer
+    Dim sel As ShapeRange
+            
+    
+    Set doc = ActiveDocument
+    
+    If doc.Selection.Shapes.Count = 0 Then
+        MsgBox "Please select at least one shape first"
+        Exit Sub
+    End If
+    
+    Set sel = doc.Selection.Shapes.All
+    
+    curveCount = 0
+    totalLength = 0
+    
+    For j = 1 To sel.Count
+        Set sh = sel(j)
+        
+        If sh.Type = cdrCurveShape Then
+            curveCount = curveCount + 1
+            
+            Dim curveLength As Double
+            curveLength = 0
+                   
+            For i = 1 To sh.Curve.SubPaths.Count
+                curveLength = curveLength + sh.Curve.SubPaths(i).length
+            Next i
+            
+            curveLength = Round(curveLength / 25) * 25
+            AddLengthText sh, curveLength
+        End If
+    Next j
+    
+End Sub
+
+Sub AddLengthText(sh As Shape, lengthValue As Double)
+    Dim doc As Document
+    Dim textShape As Shape
+    Dim centerX As Double, centerY As Double
+    Dim textString As String
+    
+    On Error GoTo ErrorHandler
+    
+    Set doc = Application.ActiveDocument
+    If doc Is Nothing Then Exit Sub
+    
+    centerX = sh.centerX
+    centerY = sh.centerY
+    
+    textString = Format(lengthValue, "0")
+    
+    Set textShape = doc.ActiveLayer.CreateArtisticText(centerX, centerY, textString)
+    
+    If textShape Is Nothing Then
+        MsgBox "Failed to create text shape"
+        Exit Sub
+    End If
+    
+
+    textShape.SetPosition centerX, centerY + 5
+    
+    Exit Sub
+    
+ErrorHandler:
+    MsgBox "Error in AddLengthText: " & Err.Description
+    If Not textShape Is Nothing Then
+        textShape.Delete
+    End If
+End Sub
